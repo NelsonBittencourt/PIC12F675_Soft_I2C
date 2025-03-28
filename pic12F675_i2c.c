@@ -1,9 +1,15 @@
-/*******************************************************************************
- Project: I2C protocol for PIC12F675
- File: pic12f675_i2c.h
- Developed by: Nelson Rossi Bittencourt
- Last updated: 19/03/2025
-********************************************************************************/
+/*
+ * File:   pic12F675_i2c.c
+ * Author: Nelson Rossi Bittencourt
+ *
+ * Created on: 03/19/2025
+ * I2C by Software for PIC12F675
+ * IDE: MPLAB X (6.25)
+ * Compiler XC8 (3.00)
+ * Version: 0.00  initial release, 'write_i2c' only
+ *          0.01  added 'read_i2c' [03/27/2025] 
+ * 
+ */  
 
 #include <xc.h>    
 #include "pic12F675_i2c.h"
@@ -19,8 +25,7 @@ void init_i2c()
 // Sends start (S) command
 void start_i2c()
 {    
-    scl_high();                     // SCL on tri-state
-    sda_high();                     // SDA on tri-state
+    init_i2c();
     
     sda_low();                      // SDA low
     __delay_us(I2C_SDelay);         // Short delay
@@ -65,7 +70,7 @@ char write_i2c(uint8_t data)
     sda_high();                       
     __delay_us(I2C_SDelay);                      
     
-    if(SDA_STATE) ret = 1;      // if SDA_STATE is high, ack else nack
+    if(SDA_STATE) ret = 1;          // if SDA_STATE is high, ack else nack
                              
     scl_low();                      
     __delay_us(I2C_LDelay);             
@@ -73,7 +78,28 @@ char write_i2c(uint8_t data)
     sda_low();                      
     __delay_us(I2C_SDelay);        
     
-    return(ret);                        // return ack(1) or nack(0)                                            
+    return ret;                    // return ack(1) or nack(0)                                            
+}
+
+// Writes a byte to I2C bus.
+uint8_t read_i2c(void)
+{
+   uint8_t ret;
+      
+   sda_high();
+   
+   for (uint8_t n=0; n<8; ++n)
+   {      
+      scl_high();
+
+      if (SDA_STATE)
+        ret = (ret << 1) | 0x01; // msbit first
+      else
+         ret = ret << 1;      
+      scl_low();
+    }
+   
+   return ret;
 }
 
 // Sets SCL to low level
